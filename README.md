@@ -9,7 +9,7 @@ Designed as a premium **SaaS-style assistant** for **learning, coding, debugging
 
 * 🧊 **Premium animated SaaS UI** (not basic chat UI)
 * 🔄 **Multiple AI models switcher** (free + reasoning + coding)
-* 🧠 **Sherlock Think Alpha + GLM + Qwen + DeepSeek**
+* 🧠 **Sherlock Think Alpha + GLM + DeepSeek**
 * 📎 **Upload and analyze files** (TXT / code / notes)
 * ✨ **Markdown + code block formatting**
 * 📝 **Local chat history saved automatically**
@@ -37,7 +37,6 @@ Designed as a premium **SaaS-style assistant** for **learning, coding, debugging
 | --------------------- | ------------------ | --------------------------------- |
 | Sherlock Think Alpha  | Deep reasoning     | `openrouter/sherlock-think-alpha` |
 | GLM 4.5 Air (Free)    | General chat       | `z-ai/glm-4.5-air:free`           |
-| Qwen 2.5 Coder (Free) | Coding & debugging | `qwen/qwen-2.5-coder:free`        |
 | DeepSeek Chat (Free)  | Fast responses     | `deepseek/deepseek-chat`          |
 
 ---
