@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Plus, Zap, Bot, Settings2, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 // --- MODELS CONFIG ---
 const MODEL_OPTIONS = [
@@ -16,12 +18,6 @@ const MODEL_OPTIONS = [
     label: "GLM 4.5 Air (Free)",
     value: "z-ai/glm-4.5-air:free",
     badge: "✨ General",
-  },
-  {
-    id: "qwenCoder",
-    label: "Qwen 2.5 Coder (Free)",
-    value: "qwen/qwen-2.5-coder:free",
-    badge: "💻 Coding",
   },
   {
     id: "deepseek",
@@ -153,11 +149,12 @@ export default function App() {
 
   const renderMarkdown = (content) => (
     <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
       components={{
         code({ inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || "");
           return !inline && match ? (
-            <SyntaxHighlighter language={match[1]} PreTag="div" {...props}>
+            <SyntaxHighlighter language={match[1]} style={oneDark} PreTag="div" {...props}>
               {String(children).replace(/\n$/, "")}
             </SyntaxHighlighter>
           ) : (
@@ -168,6 +165,43 @@ export default function App() {
         },
         p({ children }) {
           return <p className="mb-1 last:mb-0">{children}</p>;
+        },
+        table({ children }) {
+          return (
+            <div className="overflow-x-auto my-3">
+              <table className="w-full border-collapse border border-slate-600">
+                {children}
+              </table>
+            </div>
+          );
+        },
+        thead({ children }) {
+          return (
+            <thead className="bg-slate-800">
+              {children}
+            </thead>
+          );
+        },
+        th({ children }) {
+          return (
+            <th className="border border-slate-600 px-3 py-2 text-left text-slate-100 font-semibold">
+              {children}
+            </th>
+          );
+        },
+        td({ children }) {
+          return (
+            <td className="border border-slate-600 px-3 py-2 text-slate-200">
+              {children}
+            </td>
+          );
+        },
+        tr({ children }) {
+          return (
+            <tr className="hover:bg-slate-800/50 transition">
+              {children}
+            </tr>
+          );
         },
       }}
     >
@@ -279,7 +313,7 @@ export default function App() {
                 Study & Dev AI
               </h2>
               <p className="text-[11px] text-slate-400 mt-1">
-                Ask questions, paste code, or attach files. I’ll help you learn,
+                Ask questions, paste code, or attach files. I'll help you learn,
                 debug, and build.
               </p>
             </div>
