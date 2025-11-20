@@ -2,16 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-slate-950 text-white;
+/* VisionPro theme tokens & variables */
+:root {
+  --bg-1: #0f1724;
+  --bg-2: #020617;
+  --panel: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.06);
+  --text: #e6eef8;
+  --muted: #9aa3b2;
+  --accent: #60a5fa;
 }
 
-/* smooth fade */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Dark theme styles */
+.dark {
+  color-scheme: dark;
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.2s ease-out;
+/* Light theme styles */
+.light {
+  color-scheme: light;
+}
+
+/* Glass panel helper */
+.glass {
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+
+.dark .glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.light .glass {
+  background: linear-gradient(180deg, rgba(10,15,30,0.02), rgba(10,15,30,0.01));
+  border: 1px solid rgba(10,15,30,0.08);
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Animations */
+@keyframes slideFromLeft {
+  from { transform: translateX(-12%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-slide-left { animation: slideFromLeft 260ms cubic-bezier(.2,.9,.3,1) both; }
+.animate-fadeUp { animation: fadeUp 220ms ease both; }
+
+/* Dynamic expanding bubble styles */
+.dynamic-bubble {
+  width: fit-content;
+  min-width: 120px;
+  max-width: min(80%, 600px);
+  transition: max-width 0.3s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* For longer content, allow more expansion */
+.dynamic-bubble:has(.prose) {
+  max-width: min(85%, 800px);
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .dynamic-bubble {
+    max-width: min(70%, 700px);
+  }
+  .dynamic-bubble:has(.prose) {
+    max-width: min(80%, 900px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .dynamic-bubble {
+    max-width: min(60%, 800px);
+  }
+  .dynamic-bubble:has(.prose) {
+    max-width: min(75%, 1000px);
+  }
+}
+
+/* Small chat button styles */
+.chat-button {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(96, 165, 250, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); }
+}
+
+/* Sidebar styles */
+.sidebar-enter {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Small responsive helpers */
+@media (max-width: 640px) {
+  .mobile-hide-sm { display: none; }
+  .dynamic-bubble {
+    max-width: min(90%, 400px);
+  }
+  .dynamic-bubble:has(.prose) {
+    max-width: min(95%, 500px);
+  }
 }
