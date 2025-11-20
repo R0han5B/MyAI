@@ -19,6 +19,7 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { readAnyFile } from "./utils/fileReaders.js";
 
 const MODEL_OPTIONS = [
   {
@@ -150,7 +151,7 @@ const MarkdownRenderer = ({ content }) => (
 export default function App() {
   const [messages, setMessages] = useState(() => {
     try {
-      const s = localStorage.getItem("chat-history");
+      const s = window.localStorage.getItem("chat-history");
       return s ? JSON.parse(s) : [];
     } catch {
       return [];
@@ -163,7 +164,7 @@ export default function App() {
 
   // Theme state - only light and dark
   const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem("theme") || "dark";
+    const savedTheme = window.localStorage.getItem("theme") || "dark";
     return savedTheme === "light" ? "light" : "dark";
   });
 
@@ -191,13 +192,13 @@ export default function App() {
     }
     
     // Save to localStorage
-    localStorage.setItem("theme", theme);
+    window.localStorage.setItem("theme", theme);
   }, [theme]);
 
   // Persist messages
   useEffect(() => {
     try {
-      localStorage.setItem("chat-history", JSON.stringify(messages));
+      window.localStorage.setItem("chat-history", JSON.stringify(messages));
     } catch {}
   }, [messages]);
 
@@ -271,6 +272,11 @@ export default function App() {
           : `The user uploaded a file.\n\nFile name: ${file.name}\n\nFile content:\n${fileContent}\n\nUser message: ${text || "(no extra message)"}`
         : text;
 
+      const conversationHistory = messages.map((m) => ({
+        role: m.sender === "user" ? "user" : "assistant",
+        content: m.text,
+      }));
+
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -285,6 +291,7 @@ export default function App() {
               content:
                 "You are a professional, concise AI assistant. Prefer clear structure, markdown formatting.",
             },
+            ...conversationHistory,
             { role: "user", content: messageContent },
           ],
         }),
@@ -328,10 +335,8 @@ export default function App() {
 
   return (
     <div className={`min-h-screen w-full flex flex-col ${theme === 'dark' ? 'bg-[radial-gradient(circle_at_top,_#0f1724,_#020617)]' : 'bg-[radial-gradient(circle_at_top,_#f6f8fb,_#ffffff)]'} ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>
-      {/* TOP NAV - Adjusts with sidebar */}
-      <header className={`h-14 border-b ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'} flex items-center justify-between px-4 md:px-6 glass relative z-40 transition-all duration-300 ${
-        sidebarOpen ? 'md:ml-80' : ''
-      }`}>
+      {/* TOP NAV - Fixed Position */}
+      <header className={`fixed top-0 left-0 right-0 h-14 border-b ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'} flex items-center justify-between px-4 md:px-6 glass z-50`}>
         <div className="flex items-center gap-3">
           <button
             className={`p-2 rounded-md ${theme === 'dark' ? 'hover:bg-white/3' : 'hover:bg-slate-200'} transition-colors`}
@@ -354,7 +359,7 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-4 text-xs">
-          <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full ${theme === 'dark' ? 'bg-slate-900/80 border border-slate-700/80' : 'bg-white/80 border border-slate-300/80'}`}>
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/80">
             <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className={theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}>
               {currentModel?.label || "No model"}
@@ -370,46 +375,138 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN CHAT - Adjusts based on sidebar */}
-      <main className={`flex-1 flex flex-col ${theme === 'dark' ? 'bg-[radial-gradient(circle_at_top,_#1f2937,_#020617)]' : 'bg-[radial-gradient(circle_at_top,_#f8fafc,_#ffffff]'} transition-all duration-300 ${
-        sidebarOpen ? 'md:ml-80' : ''
-      }`}>
-        <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-slate-800/80 bg-slate-950/60' : 'border-slate-200/80 bg-white/60'} backdrop-blur-lg glass flex items-center justify-between`}>
-          <div>
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <span className="inline-flex h-5 w-5 rounded-md bg-blue-500/20 border border-blue-500/50 items-center justify-center">
-                <Zap size={12} className="text-blue-300" />
-              </span>
-              Study & Dev AI
-            </h2>
-            <p className={`text-[11px] ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mt-1`}>
-              Ask questions, paste code, or attach files. I'll help you learn,
-              debug, and build.
-            </p>
+      {/* MAIN CONTAINER - Handles Sidebar and Chat Layout */}
+      <div className="flex flex-1 relative">
+        {/* Sidebar - Fixed Position */}
+        <div className={`fixed top-14 left-0 bottom-0 w-80 ${theme === 'dark' ? 'bg-slate-950/98 border-r border-white/6' : 'bg-white/98 border-r border-slate-300/6'} transform transition-transform duration-300 ease-in-out z-40 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          <div className={`flex items-center justify-between p-4 ${theme === 'dark' ? 'border-b border-white/6' : 'border-b border-slate-300/6'}`}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md bg-gradient-to-br from-[#0ea5e9] to-[#7c3aed] flex items-center justify-center shadow-[0_10px_30px_rgba(99,102,241,0.12)]">
+                <Zap size={16} className="text-white" />
+              </div>
+              <div>
+                <div className={`text-sm font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>
+                  My AI Studio
+                </div>
+                <div className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}></div>
+              </div>
+            </div>
+            <button
+              onClick={closeSidebar}
+              className={`p-2 rounded-md ${theme === 'dark' ? 'hover:bg-white/3' : 'hover:bg-slate-200'} transition-colors`}
+            >
+              <X size={18} />
+            </button>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className={`hidden sm:flex items-center gap-2 px-3 py-1 rounded-full ${theme === 'dark' ? 'bg-slate-900/60 border border-slate-800' : 'bg-white/60 border border-slate-300'} text-xs`}>
-              <span className={`text-[11px] ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>Model</span>
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className={`bg-transparent outline-none text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}
-              >
+          <div className="p-4 space-y-6 overflow-y-auto h-full pb-20">
+            <div>
+              <h3 className={`text-xs uppercase ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mb-3`}>Models</h3>
+              <div className="space-y-2">
                 {MODEL_OPTIONS.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      setSelectedModel(m.id);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition text-sm ${
+                      selectedModel === m.id
+                        ? theme === 'dark' ? "bg-white/4 border border-white/8" : "bg-slate-200/50 border border-slate-300/50"
+                          : theme === 'dark' ? "hover:bg-white/3" : "hover:bg-slate-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Bot size={14} />
+                      <span>{m.label}</span>
+                    </div>
+                    <div className={`text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>{m.badge}</div>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
 
-            <div className={`sm:hidden flex items-center gap-2 text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
-              <Smartphone size={14} /> Mobile
+            <div>
+              <h3 className={`text-xs uppercase ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mb-2`}>
+                Session
+              </h3>
+              <div className={`${theme === 'dark' ? 'bg-white/2 border border-white/6' : 'bg-slate-100/50 border border-slate-300/50'} rounded-md px-3 py-2 text-sm`}>
+                <div className="flex justify-between">
+                  <span>Messages</span>
+                  <span className="font-mono">{messages.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Model</span>
+                  <span className="font-mono">
+                    {currentModel?.label || "-"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className={`text-xs uppercase ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mb-2`}>Theme</h3>
+              <div className="space-y-2">
+                {[
+                  { key: "dark", label: "Dark", icon: Moon },
+                  { key: "light", label: "Light", icon: Sun }
+                ].map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setTheme(key);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition text-sm ${
+                      theme === key
+                        ? theme === 'dark' ? "bg-white/4 border border-white/8" : "bg-slate-200/50 border border-slate-300/50"
+                          : theme === 'dark' ? "hover:bg-white/3" : "hover:bg-slate-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon size={14} />
+                      <span>{label}</span>
+                    </div>
+                    {theme === key && (
+                      <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                clearChat();
+              }}
+              className={`w-full px-3 py-2 rounded-md text-xs flex items-center justify-center gap-2 transition ${
+                theme === 'dark' 
+                  ? 'text-red-400 hover:text-red-300 bg-red-500/5 border border-red-500/30' 
+                  : 'text-red-600 hover:text-red-500 bg-red-50/50 border border-red-200/50'
+              }`}
+            >
+              <Trash2 size={14} /> Clear Chat
+            </button>
+
+            <div className={`text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'} flex items-center gap-2`}>
+              <Settings2 size={14} /> 
             </div>
           </div>
         </div>
 
+        {/* Sidebar Backdrop - Only on mobile */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/40 z-30 md:hidden"
+            onClick={closeSidebar}
+          />
+        )}
+      </div>
+
+      {/* MAIN CHAT - Adjusts based on sidebar */}
+      <main className={`flex-1 flex flex-col pt-14 pb-32 ${theme === 'dark' ? 'bg-[radial-gradient(circle_at_top,_#1f2937,_#020617)]' : 'bg-[radial-gradient(circle_at_top,_#f8fafc,_#ffffff)]'} transition-all duration-300 ${
+        sidebarOpen ? 'md:ml-80' : ''
+      }`}>
         {/* Message Area */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
           {messages.length === 0 && !loading && (
@@ -497,22 +594,10 @@ export default function App() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Small Chat Input Button - z.ai style */}
-        {messages.length === 0 && !loading && (
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-            <button
-              onClick={() => document.getElementById('chat-input')?.focus()}
-              className="group relative px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 text-sm font-medium"
-            >
-              <Send size={16} />
-              <span>Start Chatting</span>
-              <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
-            </button>
-          </div>
-        )}
-
-        {/* Input Area */}
-        <div className={`border-t ${theme === 'dark' ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-white/80'} backdrop-blur-xl px-4 md:px-6 py-3`}>
+        {/* Input Area - Fixed Position */}
+        <div className={`fixed bottom-0 left-0 right-0 border-t ${theme === 'dark' ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-white/80'} backdrop-blur-xl px-4 md:px-6 py-3 transition-all duration-300 ${
+          sidebarOpen ? 'md:left-80' : 'md:left-0'
+        }`}>
           {file && (
             <div className={`mb-2 flex items-center gap-3 ${theme === 'dark' ? 'bg-slate-900/80 border border-slate-700/80' : 'bg-white/80 border border-slate-200/80'} rounded-2xl px-4 py-2 text-[11px]`}>
               <span>📎</span>
@@ -572,131 +657,6 @@ export default function App() {
           </div>
         </div>
       </main>
-
-      {/* Sidebar - Fixed Position */}
-      <div className={`fixed top-0 left-0 h-full w-80 ${theme === 'dark' ? 'bg-slate-950/98 border-r border-white/6' : 'bg-white/98 border-r border-slate-300/6'} transform transition-transform duration-300 ease-in-out z-50 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className={`flex items-center justify-between p-4 ${theme === 'dark' ? 'border-b border-white/6' : 'border-b border-slate-300/6'}`}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-md bg-gradient-to-br from-[#0ea5e9] to-[#7c3aed] flex items-center justify-center shadow-[0_10px_30px_rgba(99,102,241,0.12)]">
-              <Zap size={16} className="text-white" />
-            </div>
-            <div>
-              <div className={`text-sm font-semibold ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>
-                My AI Studio
-              </div>
-              <div className={`text-xs ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>VisionPro Edition</div>
-            </div>
-          </div>
-          <button
-            onClick={closeSidebar}
-            className={`p-2 rounded-md ${theme === 'dark' ? 'hover:bg-white/3' : 'hover:bg-slate-200'} transition-colors`}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-6 overflow-y-auto h-full pb-20">
-          <div>
-            <h3 className={`text-xs uppercase ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mb-3`}>Models</h3>
-            <div className="space-y-2">
-              {MODEL_OPTIONS.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => {
-                    setSelectedModel(m.id);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition text-sm ${
-                    selectedModel === m.id
-                      ? theme === 'dark' ? "bg-white/4 border border-white/8" : "bg-slate-200/50 border border-slate-300/50"
-                      : theme === 'dark' ? "hover:bg-white/3" : "hover:bg-slate-100"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Bot size={14} />
-                    <span>{m.label}</span>
-                  </div>
-                  <div className={`text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>{m.badge}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className={`text-xs uppercase ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mb-2`}>
-              Session
-            </h3>
-            <div className={`${theme === 'dark' ? 'bg-white/2 border border-white/6' : 'bg-slate-100/50 border border-slate-300/50'} rounded-md px-3 py-2 text-sm`}>
-              <div className="flex justify-between">
-                <span>Messages</span>
-                <span className="font-mono">{messages.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Model</span>
-                <span className="font-mono">
-                  {currentModel?.label || "-"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className={`text-xs uppercase ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mb-2`}>Theme</h3>
-            <div className="space-y-2">
-              {[
-                { key: "dark", label: "Dark", icon: Moon },
-                { key: "light", label: "Light", icon: Sun }
-              ].map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setTheme(key);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition text-sm ${
-                    theme === key
-                      ? theme === 'dark' ? "bg-white/4 border border-white/8" : "bg-slate-200/50 border border-slate-300/50"
-                      : theme === 'dark' ? "hover:bg-white/3" : "hover:bg-slate-100"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon size={14} />
-                    <span>{label}</span>
-                  </div>
-                  {theme === key && (
-                    <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              clearChat();
-            }}
-            className={`w-full px-3 py-2 rounded-md text-xs flex items-center justify-center gap-2 transition ${
-              theme === 'dark' 
-                ? 'text-red-400 hover:text-red-300 bg-red-500/5 border border-red-500/30' 
-                : 'text-red-600 hover:text-red-500 bg-red-50/50 border border-red-200/50'
-            }`}
-          >
-            <Trash2 size={14} /> Clear Chat
-          </button>
-
-          <div className={`text-xs ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'} flex items-center gap-2`}>
-            <Settings2 size={14} /> Powered by OpenRouter
-          </div>
-        </div>
-      </div>
-
-      {/* Sidebar Backdrop - Only on mobile */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={closeSidebar}
-        />
-      )}
     </div>
   );
 }
