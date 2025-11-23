@@ -23,6 +23,12 @@ import { readAnyFile } from "./utils/fileReaders.js";
 
 const MODEL_OPTIONS = [
   {
+    id: "NVIDIA: Nemotron Nano 12B 2 VL",
+    label: "NVIDIA Nemotron Nano 12B 2 VL",
+    value: "nvidia/nemotron-nano-12b-v2-vl:free",
+    badge: "😁 Multimodal",
+  },
+  {
     id: "Grok",
     label: "Grok-4.1",
     value: "x-ai/grok-4.1-fast",
