@@ -23,6 +23,12 @@ import { readAnyFile } from "./utils/fileReaders.js";
 
 const MODEL_OPTIONS = [
   {
+    id: "OpenAI",
+    label: "OpenAI: gpt-oss-20b (free)",
+    value: "openai/gpt-oss-20b:free",
+    badge: "🐍 Best overall",
+  },
+  {
     id: "Tongyi DeepResearch",
     label: "Tongyi DeepResearch 30B A3B (free)",
     value: "alibaba/tongyi-deepresearch-30b-a3b:free",
