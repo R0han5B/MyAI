@@ -23,10 +23,16 @@ import { readAnyFile } from "./utils/fileReaders.js";
 
 const MODEL_OPTIONS = [
   {
-    id: "NVIDIA: Nemotron Nano 12B 2 VL",
+    id: "Tongyi DeepResearch",
+    label: "Tongyi DeepResearch 30B A3B (free)",
+    value: "alibaba/tongyi-deepresearch-30b-a3b:free",
+    badge: "🤯 Deepresearch",
+  },
+  {
+    id: "NVIDIA",
     label: "NVIDIA Nemotron Nano 12B 2 VL",
     value: "nvidia/nemotron-nano-12b-v2-vl:free",
-    badge: "😁 Multimodal",
+    badge: "😁 General",
   },
   {
     id: "Grok",
