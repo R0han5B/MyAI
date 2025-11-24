@@ -31,6 +31,18 @@ const MODEL_OPTIONS = [
     badge: "🐍 Best overall",
   },
   {
+    id: " Meta ",
+    label: "Meta: Llama 3.3 70B Instruct (free)",
+    value: "meta-llama/llama-3.3-70b-instruct:free",
+    badge: "🫡 By Meta",
+  },
+  {
+    id: " Gemma ",
+    label: "Google: Gemma 3 27B (free)",
+    value: "google/gemma-3-27b-it:free",
+    badge: "🫡 By Google",
+  },
+  {
     id: "Tongyi DeepResearch",
     label: "Tongyi DeepResearch 30B A3B (free)",
     value: "alibaba/tongyi-deepresearch-30b-a3b:free",
@@ -40,7 +52,7 @@ const MODEL_OPTIONS = [
     id: "NVIDIA",
     label: "NVIDIA Nemotron Nano 12B 2 VL",
     value: "nvidia/nemotron-nano-12b-v2-vl:free",
-    badge: "😁 General",
+    badge: "👌 New",
   },
   {
     id: "Grok",
