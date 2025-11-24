@@ -31,12 +31,6 @@ const MODEL_OPTIONS = [
     badge: "🐍 Best overall",
   },
   {
-    id: " Meta ",
-    label: "Meta: Llama 3.3 70B Instruct (free)",
-    value: "meta-llama/llama-3.3-70b-instruct:free",
-    badge: "🫡 By Meta",
-  },
-  {
     id: "Tongyi DeepResearch",
     label: "Tongyi DeepResearch 30B A3B (free)",
     value: "alibaba/tongyi-deepresearch-30b-a3b:free",
