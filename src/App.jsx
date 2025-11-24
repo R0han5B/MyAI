@@ -37,12 +37,6 @@ const MODEL_OPTIONS = [
     badge: "🫡 By Meta",
   },
   {
-    id: " Gemma ",
-    label: "Google: Gemma 3 27B (free)",
-    value: "google/gemma-3-27b-it:free",
-    badge: "🫡 By Google",
-  },
-  {
     id: "Tongyi DeepResearch",
     label: "Tongyi DeepResearch 30B A3B (free)",
     value: "alibaba/tongyi-deepresearch-30b-a3b:free",
